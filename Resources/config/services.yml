@@ -1,0 +1,9 @@
+services:
+  ruvents_form_wizard.wizard_factory:
+    class: Ruvents\FormWizardBundle\WizardFactory
+    autowire: true
+
+  ruvents_form_wizard.storage.session:
+    class: Ruvents\FormWizardBundle\Storage\SessionStorage
+    public: false
+    autowire: true
