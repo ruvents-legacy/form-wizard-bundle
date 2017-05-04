@@ -46,11 +46,6 @@ class Wizard implements WizardInterface, WizardConfigInterface
      */
     private $form;
 
-    /**
-     * @var bool
-     */
-    private $valid;
-
     public function __construct(StorageInterface $storage, WizardTypeInterface $type, $data = null, array $options = [])
     {
         $this->storage = $storage;
@@ -114,12 +109,8 @@ class Wizard implements WizardInterface, WizardConfigInterface
      */
     public function isValid()
     {
-        if (null === $this->valid) {
-            $this->valid = $this->type->isValid($this->data, $this->step, $this->options)
-                && (null === $this->form || $this->form->isSubmitted() && $this->form->isValid());
-        }
-
-        return $this->valid;
+        return $this->type->isValid($this->data, $this->step, $this->options)
+            && (null === $this->form || $this->form->isSubmitted() && $this->form->isValid());
     }
 
     /**
@@ -140,7 +131,6 @@ class Wizard implements WizardInterface, WizardConfigInterface
                 ->createFormBuilder($this->step, $this->options)
                 ->setData($this->data)
                 ->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event) {
-                    $this->dropValid();
                     $this->data = $event->getForm()->getData();
                 }, -1000)
                 ->getForm();
@@ -161,7 +151,6 @@ class Wizard implements WizardInterface, WizardConfigInterface
         $this->assignNextStep();
         $this->updateData();
 
-        $this->dropValid();
         $this->dropForm();
 
         return $this;
@@ -220,15 +209,12 @@ class Wizard implements WizardInterface, WizardConfigInterface
 
     private function updateData()
     {
-        if ($this->storage->hasStepData($this->getStorageKey(), $this->step)) {
-            $data = $this->storage->getStepData($this->getStorageKey(), $this->step);
+        $storageKey = $this->getStorageKey();
+
+        if ($this->storage->hasStepData($storageKey, $this->step)) {
+            $data = $this->storage->getStepData($storageKey, $this->step);
             $this->data = $this->type->denormalize($data, $this->data, $this->step, $this->options);
         }
-    }
-
-    private function dropValid()
-    {
-        $this->valid = null;
     }
 
     private function dropForm()
