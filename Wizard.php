@@ -128,7 +128,7 @@ class Wizard implements WizardInterface, WizardConfigInterface
     {
         if (null === $this->form) {
             $this->form = $this->type
-                ->createFormBuilder($this->step, $this->options)
+                ->createFormBuilder($this->data, $this->step, $this->options)
                 ->setData($this->data)
                 ->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event) {
                     $this->data = $event->getForm()->getData();

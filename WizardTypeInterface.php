@@ -34,12 +34,13 @@ interface WizardTypeInterface
     public function isValid($data, $step, array $options);
 
     /**
+     * @param mixed      $data
      * @param string|int $step
      * @param array      $options
      *
      * @return FormBuilderInterface
      */
-    public function createFormBuilder($step, array $options);
+    public function createFormBuilder($data, $step, array $options);
 
     /**
      * @param mixed      $data
