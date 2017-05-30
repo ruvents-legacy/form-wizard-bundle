@@ -7,3 +7,7 @@ services:
     class: Ruvents\FormWizardBundle\Storage\SessionStorage
     public: false
     autowire: true
+
+  Ruvents\FormWizardBundle\WizardFactoryInterface: "@ruvents_form_wizard.wizard_factory"
+
+  Ruvents\FormWizardBundle\Storage\StorageInterface: "@ruvents_form_wizard.storage.session"
