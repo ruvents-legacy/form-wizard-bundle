@@ -37,9 +37,9 @@ class RegistrationController extends AbstractController
             ->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $wizard->revalidate()->save();
+            $wizard->save();
 
-            if ($wizard->isComplete()) {
+            if ($wizard->revalidate()->isComplete()) {
                 // persist
 
                 return $this->redirectToRoute('account');
