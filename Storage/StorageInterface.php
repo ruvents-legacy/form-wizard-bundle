@@ -1,44 +1,15 @@
 <?php
+declare(strict_types=1);
 
 namespace Ruvents\FormWizardBundle\Storage;
 
-use Ruvents\FormWizardBundle\Exception\StepDataNotFoundException;
-
 interface StorageInterface
 {
-    /**
-     * @param string     $key
-     * @param int|string $step
-     *
-     * @return mixed
-     *
-     * @throws StepDataNotFoundException
-     */
-    public function getStepData($key, $step);
+    public function has(string $key): bool;
 
-    /**
-     * @param string     $key
-     * @param int|string $step
-     *
-     * @return bool
-     */
-    public function hasStepData($key, $step);
+    public function get(string $key);
 
-    /**
-     * @param string     $key
-     * @param int|string $step
-     * @param mixed      $data
-     */
-    public function setStepData($key, $step, $data);
+    public function set(string $key, $value): void;
 
-    /**
-     * @param string     $key
-     * @param int|string $step
-     */
-    public function removeStepData($key, $step);
-
-    /**
-     * @param string $key
-     */
-    public function clear($key);
+    public function remove(string $key): void;
 }

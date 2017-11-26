@@ -1,11 +1,17 @@
 <?php
+declare(strict_types=1);
 
 namespace Ruvents\FormWizardBundle\DependencyInjection;
 
-use Symfony\Component\Config\FileLocator;
+use Ruvents\FormWizardBundle\Storage\SessionStorage;
+use Ruvents\FormWizardBundle\Storage\StorageInterface;
+use Ruvents\FormWizardBundle\Type\StepTypeInterface;
+use Ruvents\FormWizardBundle\Type\TypeRegistry;
+use Ruvents\FormWizardBundle\Type\WizardTypeInterface;
+use Ruvents\FormWizardBundle\WizardFactory;
+use Ruvents\FormWizardBundle\WizardFactoryInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
-use Symfony\Component\HttpKernel\DependencyInjection\Extension;
+use Symfony\Component\DependencyInjection\Extension\Extension;
 
 class RuventsFormWizardExtension extends Extension
 {
@@ -14,7 +20,25 @@ class RuventsFormWizardExtension extends Extension
      */
     public function load(array $configs, ContainerBuilder $container)
     {
-        $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
-        $loader->load('services.yml');
+        $container->autowire('ruvents_form_wizard.factory.default', WizardFactory::class)
+            ->setPublic(false);
+
+        $container->setAlias(WizardFactoryInterface::class, 'ruvents_form_wizard.factory.default')
+            ->setPublic(false);
+
+        $container->autowire(TypeRegistry::class)
+            ->setPublic(false);
+
+        $container->autowire('ruvents_form_wizard.storage.session', SessionStorage::class)
+            ->setPublic(false);
+
+        $container->setAlias(StorageInterface::class, 'ruvents_form_wizard.storage.session')
+            ->setPublic(false);
+
+        $container->registerForAutoconfiguration(WizardTypeInterface::class)
+            ->addTag('ruvents_form_wizard.wizard_type');
+
+        $container->registerForAutoconfiguration(StepTypeInterface::class)
+            ->addTag('ruvents_form_wizard.step_type');
     }
 }

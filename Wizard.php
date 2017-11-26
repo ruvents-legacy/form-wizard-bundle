@@ -1,168 +1,210 @@
 <?php
+declare(strict_types=1);
 
 namespace Ruvents\FormWizardBundle;
 
-use Ruvents\FormWizardBundle\Exception\CompleteWizardException;
-use Ruvents\FormWizardBundle\Exception\InvalidStepException;
+use Ruvents\FormWizardBundle\Exception\StepNotFoundException;
 use Ruvents\FormWizardBundle\Storage\StorageInterface;
-use Symfony\Component\Form\FormEvent;
-use Symfony\Component\Form\FormEvents;
-use Symfony\Component\Form\FormInterface;
+use Ruvents\FormWizardBundle\Type\WizardTypeFacade;
 
-class Wizard implements WizardInterface, WizardConfigInterface
+final class Wizard implements \ArrayAccess, \IteratorAggregate, \Countable
 {
-    /**
-     * @var StorageInterface
-     */
-    private $storage;
-
-    /**
-     * @var WizardTypeInterface
-     */
     private $type;
 
-    /**
-     * @var mixed
-     */
+    private $storage;
+
     private $data;
 
-    /**
-     * @var array
-     */
     private $options;
 
     /**
-     * @var int|string
+     * @var Step[] ['step_name' => object Step]
      */
-    private $step;
+    private $steps;
 
     /**
-     * @var array
+     * @var Step[] [1 => object Step]
      */
-    private $previousSteps = [];
+    private $stepsByIndex;
 
     /**
-     * @var FormInterface
+     * @param Step[] $steps
      */
-    private $form;
-
-    public function __construct(StorageInterface $storage, WizardTypeInterface $type, $data = null, array $options = [])
+    public function __construct(WizardTypeFacade $type, StorageInterface $storage, $data, array $options, array $steps)
     {
-        $this->storage = $storage;
         $this->type = $type;
+        $this->storage = $storage;
         $this->data = $data;
         $this->options = $options;
-        $this->assignNextStep();
-        $this->updateData();
+        $this->steps = $steps;
+
+        $indexes = array_map(function (Step $step) {
+            return $step->getIndex();
+        }, $steps);
+        $this->stepsByIndex = array_combine($indexes, $steps);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getOptions()
+    public function has(string $name): bool
     {
-        return $this->options;
+        return isset($this->steps[$name]);
+    }
+
+    public function get(string $name): Step
+    {
+        if (!$this->has($name)) {
+            throw new StepNotFoundException($name);
+        }
+
+        return $this->steps[$name];
     }
 
     /**
-     * {@inheritdoc}
+     * @return Step[]
      */
+    public function all(): array
+    {
+        return $this->steps;
+    }
+
+    public function hasByIndex(int $index): bool
+    {
+        return isset($this->stepsByIndex[$index]);
+    }
+
+    public function getByIndex(int $index): Step
+    {
+        if (!$this->hasByIndex($index)) {
+            throw new StepNotFoundException($index);
+        }
+
+        return $this->stepsByIndex[$index];
+    }
+
+    /**
+     * @return Step[]
+     */
+    public function allIndexed(): array
+    {
+        return $this->stepsByIndex;
+    }
+
+    public function isComplete(): bool
+    {
+        foreach ($this->steps as $step) {
+            if (!$step->isValid()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public function isValidTill(Step $step): bool
+    {
+        foreach ($this->steps as $name => $checkStep) {
+            if ($step === $checkStep) {
+                return true;
+            }
+
+            if (!$checkStep->isValid()) {
+                return false;
+            }
+        }
+
+        throw new StepNotFoundException($step);
+    }
+
+    public function getLastValid(): ?Step
+    {
+        $lastValidStep = null;
+
+        foreach ($this->steps as $checkStep) {
+            if (!$checkStep->isValid()) {
+                break;
+            }
+
+            $lastValidStep = $checkStep;
+        }
+
+        return $lastValidStep;
+    }
+
+    public function getFirstInvalid(): ?Step
+    {
+        foreach ($this->steps as $checkStep) {
+            if (!$checkStep->isValid()) {
+                return $checkStep;
+            }
+        }
+
+        return null;
+    }
+
+    public function getPrevious(Step $step): ?Step
+    {
+        $previousStep = null;
+
+        foreach ($this->steps as $checkStep) {
+            if ($checkStep === $step) {
+                return $previousStep;
+            }
+
+            $previousStep = $checkStep;
+        }
+
+        throw new StepNotFoundException($step);
+    }
+
+    public function getNext(Step $step): ?Step
+    {
+        if (!$this->has($step->getName())) {
+            throw new StepNotFoundException($step);
+        }
+
+        $return = false;
+
+        foreach ($this->steps as $checkStep) {
+            if ($return) {
+                return $checkStep;
+            }
+
+            if ($checkStep === $step) {
+                $return = true;
+            }
+        }
+
+        return null;
+    }
+
+    public function save()
+    {
+        $normalized = $this->type->normalize($this->data, $this->options);
+        $this->storage->set($this->options['storage_key'], $normalized);
+
+        return $this;
+    }
+
+    public function clear()
+    {
+        $this->storage->remove($this->options['storage_key']);
+
+        return $this;
+    }
+
     public function getData()
     {
         return $this->data;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getStep()
+    public function getOptions(): array
     {
-        return $this->step;
+        return $this->options;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getPreviousSteps()
+    public function revalidate()
     {
-        return $this->previousSteps;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getNextSteps()
-    {
-        return array_map(function ($step) {
-            if (!(is_int($step) || is_string($step) || is_float($step))) {
-                throw new \InvalidArgumentException(
-                    sprintf('Step must be int, float or string, %s given.', gettype($step))
-                );
-            }
-
-            return $step;
-        }, $this->type->getNextSteps($this->step, $this->previousSteps, $this->data, $this->options));
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function isValid()
-    {
-        return $this->type->isValid($this->data, $this->step, $this->options)
-            && (null === $this->form || $this->form->isSubmitted() && $this->form->isValid());
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function isComplete()
-    {
-        return [] === $this->getNextSteps();
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getForm()
-    {
-        if (null === $this->form) {
-            $this->form = $this->type
-                ->createFormBuilder($this->data, $this->step, $this->options)
-                ->setData($this->data)
-                ->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event) {
-                    $this->data = $event->getForm()->getData();
-                }, -1000)
-                ->getForm();
-        }
-
-        return $this->form;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function proceed()
-    {
-        if (!$this->isValid()) {
-            throw new InvalidStepException($this->step);
-        }
-
-        $this->assignNextStep();
-        $this->updateData();
-
-        $this->dropForm();
-
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function proceedTo($targetStep)
-    {
-        while ($targetStep !== $this->step) {
-            $this->proceed();
+        foreach ($this->steps as $step) {
+            $step->revalidate();
         }
 
         return $this;
@@ -171,59 +213,50 @@ class Wizard implements WizardInterface, WizardConfigInterface
     /**
      * {@inheritdoc}
      */
-    public function save()
+    public function offsetExists($name): bool
     {
-        $data = $this->type->normalize($this->data, $this->step, $this->options);
-        $this->storage->setStepData($this->getStorageKey(), $this->step, $data);
-
-        return $this;
+        return $this->has($name);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function clear()
+    public function offsetGet($name): Step
     {
-        $this->storage->clear($this->getStorageKey());
-
-        return $this;
+        return $this->get($name);
     }
 
     /**
-     * @throws CompleteWizardException
+     * {@inheritdoc}
      */
-    private function assignNextStep()
+    public function offsetSet($name, $value): void
     {
-        $nextSteps = $this->getNextSteps();
-
-        if (empty($nextSteps)) {
-            throw new CompleteWizardException();
-        }
-
-        if (null !== $this->step) {
-            $this->previousSteps[] = $this->step;
-        }
-
-        $this->step = reset($nextSteps);
+        throw new \LogicException();
     }
 
-    private function updateData()
+    /**
+     * {@inheritdoc}
+     */
+    public function offsetUnset($name): void
     {
-        $storageKey = $this->getStorageKey();
-
-        if ($this->storage->hasStepData($storageKey, $this->step)) {
-            $data = $this->storage->getStepData($storageKey, $this->step);
-            $this->data = $this->type->denormalize($data, $this->data, $this->step, $this->options);
-        }
+        throw new \LogicException();
     }
 
-    private function dropForm()
+    /**
+     * {@inheritdoc}
+     *
+     * @return \Traversable|Step[]
+     */
+    public function getIterator(): \Traversable
     {
-        $this->form = null;
+        return new \ArrayIterator($this->steps);
     }
 
-    private function getStorageKey()
+    /**
+     * {@inheritdoc}
+     */
+    public function count(): int
     {
-        return $this->type->getStorageKey($this->options);
+        return count($this->steps);
     }
 }
