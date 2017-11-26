@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Ruvents\FormWizardBundle\DependencyInjection;
 
+use Ruvents\FormWizardBundle\Exception\StepNotFoundException;
 use Ruvents\FormWizardBundle\Storage\SessionStorage;
 use Ruvents\FormWizardBundle\Storage\StorageInterface;
 use Ruvents\FormWizardBundle\Type\StepTypeInterface;
@@ -34,6 +35,10 @@ class RuventsFormWizardExtension extends Extension
 
         $container->setAlias(StorageInterface::class, 'ruvents_form_wizard.storage.session')
             ->setPublic(false);
+
+        $container->register(StepNotFoundException::class)
+            ->setPublic(false)
+            ->addTag('kernel.event_subscriber');
 
         $container->registerForAutoconfiguration(WizardTypeInterface::class)
             ->addTag('ruvents_form_wizard.wizard_type');
