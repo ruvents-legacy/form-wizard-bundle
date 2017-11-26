@@ -8,7 +8,7 @@ final class WizardEvents
     /**
      * @Event("Ruvents\FormWizardBundle\Event\WizardEvent")
      */
-    const INIT = 'ruvents_form_wizard.init';
+    const POST_INIT = 'ruvents_form_wizard.post_init';
 
     /**
      * @Event("Ruvents\FormWizardBundle\Event\WizardEvent")

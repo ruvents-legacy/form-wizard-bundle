@@ -9,9 +9,9 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 interface WizardTypeInterface
 {
-    public function configureOptions(OptionsResolver $resolver)/* todo: : void*/;
+    public function configureOptions(OptionsResolver $resolver): void;
 
-    public function build(WizardBuilder $builder, array $options)/* todo: : void*/;
+    public function build(WizardBuilder $builder, array $options): void;
 
     public function normalize(NormalizerInterface $normalizer, $data, array $options);
 

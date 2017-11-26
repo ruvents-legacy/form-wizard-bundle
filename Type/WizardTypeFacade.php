@@ -27,9 +27,9 @@ class WizardTypeFacade
         $this->type->configureOptions($resolver);
     }
 
-    public function build($builder, array $options): void
+    public function build(WizardBuilder $builder): void
     {
-        $this->type->build($builder, $options);
+        $this->type->build($builder, $builder->getOptions());
     }
 
     public function normalize($data, array $options)

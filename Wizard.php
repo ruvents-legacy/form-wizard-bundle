@@ -12,11 +12,11 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 final class Wizard implements \ArrayAccess, \IteratorAggregate, \Countable
 {
-    private $type;
-
     private $storage;
 
     private $dispatcher;
+
+    private $type;
 
     private $data;
 
@@ -35,11 +35,11 @@ final class Wizard implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * @param Step[] $steps
      */
-    public function __construct(WizardTypeFacade $type, StorageInterface $storage, EventDispatcherInterface $dispatcher, $data, array $options, array $steps)
+    public function __construct(StorageInterface $storage, EventDispatcherInterface $dispatcher, WizardTypeFacade $type, $data, array $options, array $steps)
     {
-        $this->type = $type;
         $this->storage = $storage;
         $this->dispatcher = $dispatcher;
+        $this->type = $type;
         $this->data = $data;
         $this->options = $options;
         $this->steps = $steps;
@@ -48,6 +48,8 @@ final class Wizard implements \ArrayAccess, \IteratorAggregate, \Countable
             return $step->getIndex();
         }, $steps);
         $this->stepsByIndex = array_combine($indexes, $steps);
+
+        $this->dispatch(WizardEvents::POST_INIT);
     }
 
     public function getData()
@@ -194,23 +196,23 @@ final class Wizard implements \ArrayAccess, \IteratorAggregate, \Countable
 
     public function save()
     {
-        $this->dispatcher->dispatch(WizardEvents::PRE_SAVE, new WizardEvent($this));
+        $this->dispatch(WizardEvents::PRE_SAVE);
 
         $normalized = $this->type->normalize($this->data, $this->options);
         $this->storage->set($this->options['storage_key'], $normalized);
 
-        $this->dispatcher->dispatch(WizardEvents::POST_SAVE, new WizardEvent($this));
+        $this->dispatch(WizardEvents::POST_SAVE);
 
         return $this;
     }
 
     public function clear()
     {
-        $this->dispatcher->dispatch(WizardEvents::PRE_CLEAR, new WizardEvent($this));
+        $this->dispatch(WizardEvents::PRE_CLEAR);
 
         $this->storage->remove($this->options['storage_key']);
 
-        $this->dispatcher->dispatch(WizardEvents::POST_CLEAR, new WizardEvent($this));
+        $this->dispatch(WizardEvents::POST_CLEAR);
 
         return $this;
     }
@@ -272,5 +274,10 @@ final class Wizard implements \ArrayAccess, \IteratorAggregate, \Countable
     public function count(): int
     {
         return count($this->steps);
+    }
+
+    private function dispatch(string $event): void
+    {
+        $this->dispatcher->dispatch($event, new WizardEvent($this));
     }
 }
