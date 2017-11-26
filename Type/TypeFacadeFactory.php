@@ -9,7 +9,7 @@ use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-class TypeRegistry
+class TypeFacadeFactory
 {
     private $normalizer;
 
@@ -39,12 +39,12 @@ class TypeRegistry
         $this->stepTypes = $stepTypes;
     }
 
-    public function getWizardType(string $class): WizardTypeFacade
+    public function createWizardTypeFacade(string $class): WizardTypeFacade
     {
         return new WizardTypeFacade($this->wizardTypes->get($class), $this->normalizer, $this->denormalizer);
     }
 
-    public function getStepType(string $class): StepTypeFacade
+    public function createStepTypeFacade(string $class): StepTypeFacade
     {
         return new StepTypeFacade($this->stepTypes->get($class), $this->validator, $this->formFactory);
     }

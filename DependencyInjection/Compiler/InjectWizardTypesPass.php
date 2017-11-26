@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Ruvents\FormWizardBundle\DependencyInjection\Compiler;
 
-use Ruvents\FormWizardBundle\Type\TypeRegistry;
+use Ruvents\FormWizardBundle\Type\TypeFacadeFactory;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\Compiler\ServiceLocatorTagPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -23,7 +23,7 @@ class InjectWizardTypesPass implements CompilerPassInterface
             $types[$id] = new Reference($id);
         }
 
-        $container->findDefinition(TypeRegistry::class)
+        $container->findDefinition(TypeFacadeFactory::class)
             ->setArgument('$wizardTypes', ServiceLocatorTagPass::register($container, $types));
     }
 }

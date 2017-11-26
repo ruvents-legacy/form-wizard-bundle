@@ -4,20 +4,20 @@ declare(strict_types=1);
 namespace Ruvents\FormWizardBundle;
 
 use Ruvents\FormWizardBundle\Storage\StorageInterface;
-use Ruvents\FormWizardBundle\Type\TypeRegistry;
+use Ruvents\FormWizardBundle\Type\TypeFacadeFactory;
 use Ruvents\FormWizardBundle\Type\WizardBuilder;
 use Symfony\Component\OptionsResolver\Options;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class WizardFactory implements WizardFactoryInterface
 {
-    private $typeRegistry;
+    private $typeFacadeFactory;
 
     private $storage;
 
-    public function __construct(TypeRegistry $typeRegistry, StorageInterface $storage)
+    public function __construct(TypeFacadeFactory $typeFacadeFactory, StorageInterface $storage)
     {
-        $this->typeRegistry = $typeRegistry;
+        $this->typeFacadeFactory = $typeFacadeFactory;
         $this->storage = $storage;
     }
 
@@ -26,14 +26,14 @@ class WizardFactory implements WizardFactoryInterface
      */
     public function createWizardBuilder(string $type, $data = null, array $options = []): WizardBuilder
     {
-        $type = $this->typeRegistry->getWizardType($type);
+        $type = $this->typeFacadeFactory->createWizardTypeFacade($type);
 
         $resolver = new OptionsResolver();
         $this->configureWizardOptions($resolver);
         $type->configureOptions($resolver);
         $options = $resolver->resolve($options);
 
-        $builder = new WizardBuilder($this->storage, $this->typeRegistry, $type, $options);
+        $builder = new WizardBuilder($this->storage, $this->typeFacadeFactory, $type, $options);
         $builder->setData($data);
         $type->build($builder);
 

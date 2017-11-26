@@ -7,7 +7,7 @@ use Ruvents\FormWizardBundle\EventListener\StepNotFoundExceptionListener;
 use Ruvents\FormWizardBundle\Storage\SessionStorage;
 use Ruvents\FormWizardBundle\Storage\StorageInterface;
 use Ruvents\FormWizardBundle\Type\StepTypeInterface;
-use Ruvents\FormWizardBundle\Type\TypeRegistry;
+use Ruvents\FormWizardBundle\Type\TypeFacadeFactory;
 use Ruvents\FormWizardBundle\Type\WizardTypeInterface;
 use Ruvents\FormWizardBundle\WizardFactory;
 use Ruvents\FormWizardBundle\WizardFactoryInterface;
@@ -27,7 +27,7 @@ class RuventsFormWizardExtension extends Extension
         $container->setAlias(WizardFactoryInterface::class, 'ruvents_form_wizard.factory.default')
             ->setPublic(false);
 
-        $container->autowire(TypeRegistry::class)
+        $container->autowire(TypeFacadeFactory::class)
             ->setPublic(false);
 
         $container->autowire('ruvents_form_wizard.storage.session', SessionStorage::class)

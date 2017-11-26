@@ -13,7 +13,7 @@ class WizardBuilder
 {
     private $storage;
 
-    private $typeRegistry;
+    private $typeFacadeFactory;
 
     private $dispatcher;
 
@@ -25,10 +25,10 @@ class WizardBuilder
 
     private $stepsConfig = [];
 
-    public function __construct(StorageInterface $storage, TypeRegistry $typeRegistry, WizardTypeFacade $type, array $options)
+    public function __construct(StorageInterface $storage, TypeFacadeFactory $typeFacadeFactory, WizardTypeFacade $type, array $options)
     {
         $this->storage = $storage;
-        $this->typeRegistry = $typeRegistry;
+        $this->typeFacadeFactory = $typeFacadeFactory;
         $this->dispatcher = new EventDispatcher();
         $this->type = $type;
         $this->options = $options;
@@ -102,7 +102,7 @@ class WizardBuilder
         $index = 1;
 
         foreach ($this->stepsConfig as [$name, $type, $options]) {
-            $type = $this->typeRegistry->getStepType($type);
+            $type = $this->typeFacadeFactory->createStepTypeFacade($type);
             $options = $type->resolveOptions($options);
 
             if ($type->canSkip($data, $options, $canSkipContext)) {
