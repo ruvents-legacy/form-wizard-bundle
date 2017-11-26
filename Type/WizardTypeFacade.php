@@ -22,20 +22,14 @@ class WizardTypeFacade
         $this->denormalizer = $denormalizer;
     }
 
-    public function resolveOptions(array $options, OptionsResolver $resolver = null): array
+    public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver = $resolver ?? new OptionsResolver();
         $this->type->configureOptions($resolver);
-
-        return $resolver->resolve($options);
     }
 
-    public function build(array $options): WizardBuilder
+    public function build($builder, array $options): void
     {
-        $builder = new WizardBuilder();
         $this->type->build($builder, $options);
-
-        return $builder;
     }
 
     public function normalize($data, array $options)

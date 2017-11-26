@@ -3,15 +3,20 @@ declare(strict_types=1);
 
 namespace Ruvents\FormWizardBundle;
 
+use Ruvents\FormWizardBundle\Event\WizardEvent;
+use Ruvents\FormWizardBundle\Event\WizardEvents;
 use Ruvents\FormWizardBundle\Exception\StepNotFoundException;
 use Ruvents\FormWizardBundle\Storage\StorageInterface;
 use Ruvents\FormWizardBundle\Type\WizardTypeFacade;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 final class Wizard implements \ArrayAccess, \IteratorAggregate, \Countable
 {
     private $type;
 
     private $storage;
+
+    private $dispatcher;
 
     private $data;
 
@@ -30,10 +35,11 @@ final class Wizard implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * @param Step[] $steps
      */
-    public function __construct(WizardTypeFacade $type, StorageInterface $storage, $data, array $options, array $steps)
+    public function __construct(WizardTypeFacade $type, StorageInterface $storage, EventDispatcherInterface $dispatcher, $data, array $options, array $steps)
     {
         $this->type = $type;
         $this->storage = $storage;
+        $this->dispatcher = $dispatcher;
         $this->data = $data;
         $this->options = $options;
         $this->steps = $steps;
@@ -188,15 +194,23 @@ final class Wizard implements \ArrayAccess, \IteratorAggregate, \Countable
 
     public function save()
     {
+        $this->dispatcher->dispatch(WizardEvents::PRE_SAVE, new WizardEvent($this));
+
         $normalized = $this->type->normalize($this->data, $this->options);
         $this->storage->set($this->options['storage_key'], $normalized);
+
+        $this->dispatcher->dispatch(WizardEvents::POST_SAVE, new WizardEvent($this));
 
         return $this;
     }
 
     public function clear()
     {
+        $this->dispatcher->dispatch(WizardEvents::PRE_CLEAR, new WizardEvent($this));
+
         $this->storage->remove($this->options['storage_key']);
+
+        $this->dispatcher->dispatch(WizardEvents::POST_CLEAR, new WizardEvent($this));
 
         return $this;
     }

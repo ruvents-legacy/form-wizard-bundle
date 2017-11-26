@@ -3,8 +3,12 @@ declare(strict_types=1);
 
 namespace Ruvents\FormWizardBundle;
 
+use Ruvents\FormWizardBundle\Event\WizardEvent;
+use Ruvents\FormWizardBundle\Event\WizardEvents;
 use Ruvents\FormWizardBundle\Storage\StorageInterface;
 use Ruvents\FormWizardBundle\Type\TypeRegistry;
+use Ruvents\FormWizardBundle\Type\WizardBuilder;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\OptionsResolver\Options;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -26,7 +30,8 @@ class WizardFactory implements WizardFactoryInterface
 
         $resolver = new OptionsResolver();
         $this->configureWizardOptions($resolver);
-        $options = $type->resolveOptions($options, $resolver);
+        $type->configureOptions($resolver);
+        $options = $resolver->resolve($options);
 
         if (null === $data) {
             $data = $options['empty_data'];
@@ -43,10 +48,15 @@ class WizardFactory implements WizardFactoryInterface
             $type->denormalize($normalized, $data, $options);
         }
 
-        $builder = $type->build($options);
+        $dispatcher = new EventDispatcher();
+        $builder = new WizardBuilder($dispatcher);
+        $type->build($builder, $options);
         $steps = $this->createSteps($builder->getSteps(), $data);
+        $wizard = new Wizard($type, $this->storage, $dispatcher, $data, $options, $steps);
 
-        return new Wizard($type, $this->storage, $data, $options, $steps);
+        $dispatcher->dispatch(WizardEvents::INIT, new WizardEvent($wizard));
+
+        return $wizard;
     }
 
     private function createSteps(array $config, $data): array
