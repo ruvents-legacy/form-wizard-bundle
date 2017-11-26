@@ -21,7 +21,7 @@ class StepNotFoundExceptionListener implements EventSubscriberInterface
         ];
     }
 
-    public function onException(GetResponseForExceptionEvent $event)
+    public function onException(GetResponseForExceptionEvent $event): void
     {
         if (($exception = $event->getException()) instanceof StepNotFoundException) {
             $event->setException(new NotFoundHttpException($exception->getMessage(), $exception));

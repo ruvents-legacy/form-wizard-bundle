@@ -69,7 +69,7 @@ class WizardFactory implements WizardFactoryInterface
         return $steps;
     }
 
-    private function configureWizardOptions(OptionsResolver $resolver)
+    private function configureWizardOptions(OptionsResolver $resolver): void
     {
         $resolver
             ->setRequired([

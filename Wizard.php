@@ -44,6 +44,16 @@ final class Wizard implements \ArrayAccess, \IteratorAggregate, \Countable
         $this->stepsByIndex = array_combine($indexes, $steps);
     }
 
+    public function getData()
+    {
+        return $this->data;
+    }
+
+    public function getOptions(): array
+    {
+        return $this->options;
+    }
+
     public function has(string $name): bool
     {
         return isset($this->steps[$name]);
@@ -189,16 +199,6 @@ final class Wizard implements \ArrayAccess, \IteratorAggregate, \Countable
         $this->storage->remove($this->options['storage_key']);
 
         return $this;
-    }
-
-    public function getData()
-    {
-        return $this->data;
-    }
-
-    public function getOptions(): array
-    {
-        return $this->options;
     }
 
     public function revalidate()
