@@ -6,6 +6,11 @@ namespace Ruvents\FormWizardBundle\Event;
 final class WizardEvents
 {
     /**
+     * @Event("Ruvents\FormWizardBundle\Event\PreInitEvent")
+     */
+    const PRE_INIT = 'ruvents_form_wizard.pre_init';
+
+    /**
      * @Event("Ruvents\FormWizardBundle\Event\WizardEvent")
      */
     const POST_INIT = 'ruvents_form_wizard.post_init';

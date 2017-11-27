@@ -48,8 +48,6 @@ final class Wizard implements \ArrayAccess, \IteratorAggregate, \Countable
             return $step->getIndex();
         }, $steps);
         $this->stepsByIndex = array_combine($indexes, $steps);
-
-        $this->dispatch(WizardEvents::POST_INIT);
     }
 
     public function getData()

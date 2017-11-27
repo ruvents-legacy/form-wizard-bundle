@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace Ruvents\FormWizardBundle\Type;
 
+use Ruvents\FormWizardBundle\Event\PreInitWizardEvent;
+use Ruvents\FormWizardBundle\Event\WizardEvent;
+use Ruvents\FormWizardBundle\Event\WizardEvents;
 use Ruvents\FormWizardBundle\Step;
 use Ruvents\FormWizardBundle\Storage\StorageInterface;
 use Ruvents\FormWizardBundle\Wizard;
@@ -89,8 +92,12 @@ class WizardBuilder
             $this->type->denormalize($normalized, $data, $this->options);
         }
 
+        $this->dispatcher->dispatch(WizardEvents::PRE_INIT, new PreInitWizardEvent($data));
+
         $steps = $this->buildSteps($data);
         $wizard = new Wizard($this->storage, $this->dispatcher, $this->type, $data, $this->options, $steps);
+
+        $this->dispatcher->dispatch(WizardEvents::POST_INIT, new WizardEvent($wizard));
 
         return $wizard;
     }
