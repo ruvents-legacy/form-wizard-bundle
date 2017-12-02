@@ -20,7 +20,7 @@ return function (ContainerConfigurator $container) {
             '$normalizer' => ref('serializer'),
             '$denormalizer' => ref('serializer'),
             '$validator' => ref('validator'),
-            '$formFactory' => '@form.factory',
+            '$formFactory' => ref('form.factory'),
         ]);
 
     $services->set(SessionStorage::class)
