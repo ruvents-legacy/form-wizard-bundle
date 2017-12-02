@@ -12,6 +12,7 @@
     "minimum-stability": "alpha",
     "require": {
         "php": "^7.1",
+        "symfony/config": "^3.4 || ^4.0",
         "symfony/dependency-injection": "^3.4 || ^4.0",
         "symfony/event-dispatcher": "^3.4 || ^4.0",
         "symfony/form": "^3.4 || ^4.0",
@@ -24,6 +25,9 @@
         "psr-4": {
             "Ruvents\\FormWizardBundle\\": ""
         }
+    },
+    "config": {
+        "sort-packages": true
     },
     "extra": {
         "branch-alias": {
