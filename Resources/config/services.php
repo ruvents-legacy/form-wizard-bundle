@@ -39,8 +39,5 @@ return function (ContainerConfigurator $container) {
     $services->alias(WizardFactoryInterface::class, WizardFactory::class);
 
     $services->set(StepNotFoundExceptionListener::class)
-        ->args([
-            '$session' => ref('session'),
-        ])
         ->tag('kernel.event_subscriber');
 };
